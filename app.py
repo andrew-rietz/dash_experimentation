@@ -24,7 +24,7 @@ app.layout = html.Div(
             dcc.Upload(
                 id="user_upload",
                 children=html.Div([
-                    "Drag and Drop CSV or",
+                    "Drag and Drop CSV or ",
                     html.A("Select CSV Files")
                 ]),
                 style={
@@ -41,7 +41,19 @@ app.layout = html.Div(
                 # multiple=True
             ),
         ]),
-        html.Div(id="output-data-table"),
+        html.Div([
+            dash_table.DataTable(
+                id="output-data-table",
+                editable=True,
+                filter_action="native",
+                # row_selectable="multi",
+                # style_as_list_view=True,
+                style_table={
+                    'maxHeight': '300px',
+                    'overflowY': 'scroll'
+                },
+                filter_query='',
+        )]),
         html.Div([
             html.H6("Select Variable for X-Axis"),
             dcc.RadioItems(
@@ -70,7 +82,15 @@ app.layout = html.Div(
     ]
 )
 
-df = pd.DataFrame()
+
+operators = [['ge ', '>='],
+             ['le ', '<='],
+             ['lt ', '<'],
+             ['gt ', '>'],
+             ['ne ', '!='],
+             ['eq ', '='],
+             ['contains '],
+             ['datestartswith ']]
 
 
 def create_dropdown_options(df):
@@ -83,70 +103,100 @@ def parse_csv_contents(file_content, filename):
     content_type, content_string = file_content.split(",")
     decoded = base64.b64decode(content_string)
     return pd.read_csv(io.StringIO(decoded.decode("utf-8")))
-    # try:
-    #     if ".csv" in filename:
-    #         df = pd.read_csv(
-    #             io.StringIO(decoded.decode("utf-8"))
-    #         )
-    #     else:
-    #         return "The provided file must be in CSV format"
-    # except Exception as e:
-    #     print(e)
-    #     return html.Div([
-    #         "There was an error processing this file."
-    #     ])
-    # return df
 
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
 
-@app.callback(Output("output-data-table", "children"),
-            #   [Input("user_upload", "file_content")],
-            #   [State("user_upload", "filename")]
-)
-def load_table(df, columns, filename):
-    return [
-        html.H5(filename),
-        dash_table.DataTable(
-            data=df.to_dict("records"),
-            columns=columns,
-            editable=True,
-            filter_action="native",
-            row_selectable="multi",
-            style_as_list_view=True,
-        )
-    ]
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
 
 
 # Callback for data table display
-@app.callback([Output("x_axis", "options"),
-               Output("y_axis", "options")],
+@app.callback([Output("output-data-table", "data"),
+               Output("output-data-table", "columns"),
+               Output("x_axis", "value"),
+               Output("y_axis", "value")],
               [Input("user_upload", "contents")],
               [State("user_upload", "filename")]
 )
 def update_output(contents, filename):
     if contents is None:
-        return [], []
+        return [], [], "", ""
     
     df = parse_csv_contents(contents, filename)
-    columns = [{"name": c_name, "id": c_name}
+    columns = [{"name": c_name, "id": c_name, "deletable": True, "renamable": True}
                for c_name in df.columns]
-    columns["deletable"] = True
-    columns["renamable"] = True
 
+    # load_table(df, columns)
+    return df.to_dict("records"), columns, columns[0].get("name"), columns[0].get("name")
+
+@app.callback( # reference elements by id
+    [Output("x_axis", "options"),
+     Output("y_axis", "options")],
+    [Input('output-data-table', 'data')]
+)
+def set_x_y_options(table_rows):
+    df = pd.DataFrame(table_rows)
+    if(df.empty or len(df.columns) < 1):
+        return [], []
+    
     x_filter_list, x_filter_options = create_dropdown_options(df)
     y_filter_list, y_filter_options = create_dropdown_options(df)
 
-    load_table(df, columns, filename)
-
-    
     return x_filter_options, y_filter_options
 
 
 # Callback for main plot
 @app.callback( # reference elements by id
     [Output("main_graph", "figure")],
-    [Input("x_axis", "value"), Input("y_axis", "value")]
+    [Input("x_axis", "value"), 
+     Input("y_axis", "value"),
+     Input('output-data-table', 'data'),
+     Input('output-data-table', 'filter_query')]
 )
-def make_main_figure(df, x_axis, y_axis):
+def make_main_figure(x_axis, y_axis, table_rows, filter):
+    df = pd.DataFrame(table_rows)
+    if(df.empty or len(df.columns) < 1):
+        return [go.Figure(
+            data=go.Scatter(
+                x=[],
+                y=[],
+                mode="markers",
+            ),
+            layout={}
+        )]
+
+    filtering_expressions = filter.split(' && ')
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            df = df.loc[getattr(df[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            df = df.loc[df[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            df = df.loc[df[col_name].str.startswith(filter_value)]
+
     data = go.Scatter(
         x=df[x_axis],
         y=df[y_axis],
@@ -160,7 +210,7 @@ def make_main_figure(df, x_axis, y_axis):
     }
 
     figure = go.Figure(data=data, layout=layout)
-    return [figure]
+    return [figure] 
 
 # Main
 if __name__ == "__main__":
