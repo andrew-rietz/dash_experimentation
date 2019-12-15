@@ -51,9 +51,11 @@ app.layout = html.Div(
                 # row_selectable="multi",
                 # style_as_list_view=True,
                 style_table={
-                    'maxHeight': '300px',
-                    'overflowY': 'scroll'
+                    'maxHeight': '200px',
+                    'overflowY': 'scroll',
+                    'overflowX': 'scroll'
                 },
+                fixed_rows={"headers": True, "data": 0},
                 filter_query='',
         )]),
         html.Div([
