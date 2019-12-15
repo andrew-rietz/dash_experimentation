@@ -8,6 +8,8 @@ import dash_bootstrap_components as dbc
 import dash_table
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 # Create app
