@@ -94,6 +94,17 @@ operators = [['ge ', '>='],
              ['contains '],
              ['datestartswith ']]
 
+def convert_operator(operator):
+    operator_map = {
+        'ge': '>=',
+        'le': '<=',
+        'lt': '<',
+        'gt': '>',
+        'ne': '!=',
+        'eq': '='
+    }
+    return operator_map.get(operator.strip()) or f"({operator})"
+
 
 def create_dropdown_options(df):
     ls = list(df.columns)
@@ -230,8 +241,18 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
     layout = {
         "title_text": f"{y_axis} vs {x_axis}",
         "xaxis": {"title": x_axis},
-        "yaxis": {"title": y_axis}
+        "yaxis": {"title": y_axis},
+        "annotations": (),
+        "margin": {
+            "l": 50,
+            "r": 50,
+            "b": 200,
+            "t": 100,
+            "pad": 4,
+        }
     }
+
+    filter_regression_annot_text = ""
 
     if(
         (x_axis != df.columns[0]) and
@@ -245,6 +266,26 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             mode="lines",
             name="Regression Line",
         ))
+        filter_regression_annot_text += f"Regression: {fit_equation};   (R-Squared: {r_squared})"
+
+    if filter:
+        filter_str = "<br>Filters:<br>"
+        filtering_expressions = filter.split(' && ')
+        for filter_part in filtering_expressions:
+            col_name, operator, filter_value = split_filter_part(filter_part)
+            filter_str += f"[{col_name}  {convert_operator(operator)} {filter_value}]<br>"
+        
+        filter_regression_annot_text += f"<br>{filter_str}"
+
+    layout["annotations"] = (*layout["annotations"], {
+        "x": 0,
+        "y": -0.45,
+        "showarrow": False,
+        "text": filter_regression_annot_text,
+        "xref": "paper",
+        "yref": "paper",
+        "align": "left"
+    })
     figure = go.Figure(data=data, layout=layout)
     return [figure] 
 
