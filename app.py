@@ -129,7 +129,7 @@ def split_filter_part(filter_part):
 
     return [None] * 3
 
-def filter_df(base_df):
+def filter_df(base_df, filter):
     df = base_df.copy(deep=True)
     filtering_expressions = filter.split(' && ')
     for filter_part in filtering_expressions:
@@ -221,9 +221,7 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             layout={}
         )]
 
-    df = filter_df(df)
-
-    data = go.Scatter(
+    df = filter_df(df, filter)
         x=df[x_axis],
         y=df[y_axis],
         mode="markers",
