@@ -147,23 +147,21 @@ def filter_df(base_df, filter):
 
     return df
 
-def fit_polynomial(base_df, x_col, y_col):
-    df = filter_df(base_df)
-
+def fit_polynomial(df, x_col, y_col):
     regression_model = LinearRegression()
-    regression_model.fit(df[x_col], df[y_col])
-    poly_prediction = regression_model.predict(df[x_col])
+    regression_model.fit(df[[x_col]], df[y_col])
+    poly_prediction = regression_model.predict(df[[x_col]])
 
-    r_squared = r2_score(df[y_col], poly_prediction)
+    r_squared = f"{r2_score(df[y_col], poly_prediction):.4f}"
     intercept = regression_model.intercept_
     coefficients = regression_model.coef_
     coeff_str = " + ".join([
-        f"[{x_col}]*[{coeff[i]}**{i}]" for i in range(len(coefficients))
+        f"[{x_col}]*[{coefficients[i]:.4f}**{i+1}]" for i in range(len(coefficients))
     ])
     fit_equation = (
-        f"[{y_col}] = {intercept} + {coeff_str}"
+        f"[{y_col}] = {intercept:.4f} + {coeff_str}"
     )
-    return pd.DataFrame(poly_prediction), r_squared, fit_equation
+    return pd.DataFrame(data=poly_prediction, index=df.index), r_squared, fit_equation
 
 
 # Callback for data table display
