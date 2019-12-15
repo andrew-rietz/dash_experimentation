@@ -213,7 +213,7 @@ def set_x_y_options(table_rows):
 
 
 # Callback for main plot
-@app.callback( # reference elements by id
+@app.callback(
     [Output("main_graph", "figure")],
     [Input("x_axis", "value"), 
      Input("y_axis", "value"),
@@ -254,8 +254,6 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
         "paper_bgcolor": "LightSteelBlue"
     }
 
-    filter_regression_annot_text = ""
-
     if(
         (x_axis != df.columns[0]) and
         (y_axis != df.columns[0])
@@ -268,30 +266,42 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             mode="lines",
             name="Regression Line",
         ))
-        filter_regression_annot_text += f"Regression:<br>{'-' * 15}<br>{fit_equation};   (R-Squared: {r_squared})"
+        regression_annot_text = f"Regression:<br>{'-' * 15}<br>{fit_equation};   (R-Squared: {r_squared})"
+        layout["margin"]["b"] = layout["margin"]["b"] + 15 * len(regression_annot_text.split("<br>"))
+        layout["height"] = layout["height"] + 15 * len(regression_annot_text.split("<br>"))
+        layout["annotations"] = (*layout["annotations"], {
+            "x": 0,
+            "y": -0.15,
+            "showarrow": False,
+            "text": regression_annot_text,
+            "xref": "paper",
+            "yref": "paper",
+            "align": "left",
+            "yanchor": "top"
+        })
 
     if filter:
-        filter_str = f"<br><br>Filters:<br>{'-' * 15}<br>"
+        filter_str = f"Filters:<br>{'-' * 15}<br>"
         filtering_expressions = filter.split(' && ')
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
             filter_str += f"[{col_name}]  {convert_operator(operator)} [{filter_value}]<br>"
         
-        filter_regression_annot_text += f"<br>{filter_str}"
+        filter_annot_text = f"{filter_str}"
+        layout["margin"]["r"] = layout["margin"]["b"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
+        layout["width"] = layout["width"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
+        layout["annotations"] = (*layout["annotations"], {
+            "x": 1.05,
+            "y": 0.75,
+            "showarrow": False,
+            "text": filter_annot_text,
+            "xref": "paper",
+            "yref": "paper",
+            "align": "left",
+            "yanchor": "top",
+            "xanchor": "left"
+        })
 
-    layout["margin"]["b"] = layout["margin"]["b"] + 15 * len(filter_regression_annot_text.split("<br>"))
-    layout["height"] = layout["height"] + 15 * len(filter_regression_annot_text.split("<br>"))
-    layout["annotations"] = (*layout["annotations"], {
-        "x": 0,
-        "y": -0.2,
-        "showarrow": False,
-        "text": filter_regression_annot_text,
-        "xref": "paper",
-        "yref": "paper",
-        "align": "left",
-        "yanchor": "top"
-    })
-    
     figure = go.Figure(data=data, layout=layout)
     return [figure] 
 
