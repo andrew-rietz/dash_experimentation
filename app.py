@@ -129,6 +129,23 @@ def split_filter_part(filter_part):
 
     return [None] * 3
 
+def filter_df(base_df):
+    df = base_df.copy(deep=True)
+    filtering_expressions = filter.split(' && ')
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            df = df.loc[getattr(df[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            df = df.loc[df[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            df = df.loc[df[col_name].str.startswith(filter_value)]
+
+    return df
 
 # Callback for data table display
 @app.callback([Output("output-data-table", "data"),
@@ -185,19 +202,7 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             layout={}
         )]
 
-    filtering_expressions = filter.split(' && ')
-    for filter_part in filtering_expressions:
-        col_name, operator, filter_value = split_filter_part(filter_part)
-
-        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
-            # these operators match pandas series operator method names
-            df = df.loc[getattr(df[col_name], operator)(filter_value)]
-        elif operator == 'contains':
-            df = df.loc[df[col_name].str.contains(filter_value)]
-        elif operator == 'datestartswith':
-            # this is a simplification of the front-end filtering logic,
-            # only works with complete fields in standard format
-            df = df.loc[df[col_name].str.startswith(filter_value)]
+    df = filter_df(df)
 
     data = go.Scatter(
         x=df[x_axis],
