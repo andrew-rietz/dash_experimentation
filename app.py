@@ -147,6 +147,25 @@ def filter_df(base_df):
 
     return df
 
+def fit_polynomial(base_df, x_col, y_col):
+    df = filter_df(base_df)
+
+    regression_model = LinearRegression()
+    regression_model.fit(df[x_col], df[y_col])
+    poly_prediction = regression_model.predict(df[x_col])
+
+    r_squared = r2_score(df[y_col], poly_prediction)
+    intercept = regression_model.intercept_
+    coefficients = regression_model.coef_
+    coeff_str = " + ".join([
+        f"[{x_col}]*[{coeff[i]}**{i}]" for i in range(len(coefficients))
+    ])
+    fit_equation = (
+        f"[{y_col}] = {intercept} + {coeff_str}"
+    )
+    return pd.DataFrame(poly_prediction), r_squared, fit_equation
+
+
 # Callback for data table display
 @app.callback([Output("output-data-table", "data"),
                Output("output-data-table", "columns"),
