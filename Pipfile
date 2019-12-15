@@ -17,6 +17,7 @@ dash-html-components = "*"
 dash-bootstrap-components = "*"
 plotly = "*"
 sklearn = "*"
+pipfile = "*"
 
 [requires]
 python_version = "3.7"

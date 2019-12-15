@@ -252,7 +252,6 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             "b": 100,
         },
         "paper_bgcolor": "LightSteelBlue"
-        }
     }
 
     filter_regression_annot_text = ""
@@ -269,26 +268,30 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
             mode="lines",
             name="Regression Line",
         ))
-        filter_regression_annot_text += f"Regression: {fit_equation};   (R-Squared: {r_squared})"
+        filter_regression_annot_text += f"Regression:<br>{'-' * 15}<br>{fit_equation};   (R-Squared: {r_squared})"
 
     if filter:
-        filter_str = "<br>Filters:<br>"
+        filter_str = f"<br><br>Filters:<br>{'-' * 15}<br>"
         filtering_expressions = filter.split(' && ')
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
-            filter_str += f"[{col_name}  {convert_operator(operator)} {filter_value}]<br>"
+            filter_str += f"[{col_name}]  {convert_operator(operator)} [{filter_value}]<br>"
         
         filter_regression_annot_text += f"<br>{filter_str}"
 
+    layout["margin"]["b"] = layout["margin"]["b"] + 15 * len(filter_regression_annot_text.split("<br>"))
+    layout["height"] = layout["height"] + 15 * len(filter_regression_annot_text.split("<br>"))
     layout["annotations"] = (*layout["annotations"], {
         "x": 0,
-        "y": -0.45,
+        "y": -0.2,
         "showarrow": False,
         "text": filter_regression_annot_text,
         "xref": "paper",
         "yref": "paper",
-        "align": "left"
+        "align": "left",
+        "yanchor": "top"
     })
+    
     figure = go.Figure(data=data, layout=layout)
     return [figure] 
 
