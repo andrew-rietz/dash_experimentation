@@ -220,10 +220,12 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
         )]
 
     df = filter_df(df, filter)
+    data = [go.Scatter(
         x=df[x_axis],
         y=df[y_axis],
         mode="markers",
-    )
+        name=y_axis,
+    )]
 
     layout = {
         "title_text": f"{y_axis} vs {x_axis}",
@@ -231,6 +233,18 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
         "yaxis": {"title": y_axis}
     }
 
+    if(
+        (x_axis != df.columns[0]) and
+        (y_axis != df.columns[0])
+    ):
+        regression_line_data, r_squared, fit_equation = fit_polynomial(df, x_axis, y_axis)
+        df["regression"] = regression_line_data
+        data.append(go.Scatter(
+            x=df[x_axis],
+            y=df["regression"],
+            mode="lines",
+            name="Regression Line",
+        ))
     figure = go.Figure(data=data, layout=layout)
     return [figure] 
 
