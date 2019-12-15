@@ -242,15 +242,16 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
 
     layout = {
         "title_text": f"{y_axis} vs {x_axis}",
-        "xaxis": {"title": x_axis},
-        "yaxis": {"title": y_axis},
+        "xaxis": {"title": x_axis, "automargin": True},
+        "yaxis": {"title": y_axis, "automargin": True},
         "annotations": (),
+        "autosize": False,
+        "width": 850,
+        "height": 650,
         "margin": {
-            "l": 50,
-            "r": 50,
-            "b": 200,
-            "t": 100,
-            "pad": 4,
+            "b": 100,
+        },
+        "paper_bgcolor": "LightSteelBlue"
         }
     }
 
