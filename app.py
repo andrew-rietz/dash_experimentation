@@ -254,10 +254,11 @@ def set_x_y_options(table_rows):
     [Output("main_graph", "figure")],
     [Input("x_axis", "value"), 
      Input("y_axis", "value"),
+     Input("poly_degrees", "value"),
      Input('output-data-table', 'data'),
      Input('output-data-table', 'filter_query')]
 )
-def make_main_figure(x_axis, y_axis, table_rows, filter):
+def make_main_figure(x_axis, y_axis, poly_degrees, table_rows, filter):
     df = pd.DataFrame(table_rows)
     if(df.empty or len(df.columns) < 1):
         return [go.Figure(
