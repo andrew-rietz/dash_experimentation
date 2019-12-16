@@ -176,6 +176,31 @@ def fit_polynomial(df, x_col, y_col, degree):
     )
     return pd.DataFrame(data=poly_prediction, index=df.index), r_squared, fit_equation
 
+def dash_table_filters(filter):
+    filter_str = f"Filters:<br>{'-' * 15}<br>"
+    filtering_expressions = filter.split(' && ')
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+        filter_str += f"[{col_name}]  {convert_operator(operator)} [{filter_value}]<br>"
+    return filter_str
+
+def describe_filter_annotation(layout, filter_str):        
+    filter_annot_text = f"{filter_str}"
+    layout["margin"]["r"] = layout["margin"]["r"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
+    layout["width"] = layout["width"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
+    layout["annotations"] = (*layout["annotations"], {
+        "x": 1.05,
+        "y": 0.75,
+        "showarrow": False,
+        "text": filter_annot_text,
+        "xref": "paper",
+        "yref": "paper",
+        "align": "left",
+        "yanchor": "top",
+        "xanchor": "left"
+    })
+    return layout
+
 
 # Callback for data table display
 @app.callback([Output("output-data-table", "data"),
@@ -280,26 +305,8 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
         })
 
     if filter:
-        filter_str = f"Filters:<br>{'-' * 15}<br>"
-        filtering_expressions = filter.split(' && ')
-        for filter_part in filtering_expressions:
-            col_name, operator, filter_value = split_filter_part(filter_part)
-            filter_str += f"[{col_name}]  {convert_operator(operator)} [{filter_value}]<br>"
-        
-        filter_annot_text = f"{filter_str}"
-        layout["margin"]["r"] = layout["margin"]["b"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
-        layout["width"] = layout["width"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
-        layout["annotations"] = (*layout["annotations"], {
-            "x": 1.05,
-            "y": 0.75,
-            "showarrow": False,
-            "text": filter_annot_text,
-            "xref": "paper",
-            "yref": "paper",
-            "align": "left",
-            "yanchor": "top",
-            "xanchor": "left"
-        })
+        filter_str = dash_table_filters(filter)
+        layout = describe_filter_annotation(layout, filter_str)
 
     figure = go.Figure(data=data, layout=layout)
     return [figure] 
