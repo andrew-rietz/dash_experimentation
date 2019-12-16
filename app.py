@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import PolynomialFeatures
 
 
 # Create app
@@ -53,7 +54,8 @@ app.layout = html.Div(
                 style_table={
                     'maxHeight': '200px',
                     'overflowY': 'scroll',
-                    'overflowX': 'scroll'
+                    'overflowX': 'scroll',
+                    'whiteSpace': 'normal'
                 },
                 fixed_rows={"headers": True, "data": 0},
                 filter_query='',
@@ -160,16 +162,19 @@ def filter_df(base_df, filter):
 
     return df
 
-def fit_polynomial(df, x_col, y_col):
+def fit_polynomial(df, x_col, y_col, degree):
+    poly_features = PolynomialFeatures(degree=degree)
+    x_poly = poly_features.fit_transform(df[[x_col]])
+
     regression_model = LinearRegression()
-    regression_model.fit(df[[x_col]], df[y_col])
-    poly_prediction = regression_model.predict(df[[x_col]])
+    regression_model.fit(x_poly, df[y_col])
+    poly_prediction = regression_model.predict(x_poly)
 
     r_squared = f"{r2_score(df[y_col], poly_prediction):.4f}"
     intercept = regression_model.intercept_
     coefficients = regression_model.coef_
     coeff_str = " + ".join([
-        f"[{x_col}]*[{coefficients[i]:.4f}^{i+1}]" for i in range(len(coefficients))
+        f"[{x_col}]*[{coefficients[i]:.4f}^{i}]" for i in range(1, len(coefficients))
     ])
     fit_equation = (
         f"[{y_col}] = {intercept:.4f} + {coeff_str}"
@@ -258,12 +263,12 @@ def make_main_figure(x_axis, y_axis, table_rows, filter):
         (x_axis != df.columns[0]) and
         (y_axis != df.columns[0])
     ):
-        regression_line_data, r_squared, fit_equation = fit_polynomial(df, x_axis, y_axis)
+        regression_line_data, r_squared, fit_equation = fit_polynomial(df, x_axis, y_axis, 2)
         df["regression"] = regression_line_data
         data.append(go.Scatter(
             x=df[x_axis],
             y=df["regression"],
-            mode="lines",
+            mode="markers",
             name="Regression Line",
         ))
         regression_annot_text = f"Regression:<br>{'-' * 15}<br>{fit_equation};   (R-Squared: {r_squared})"
