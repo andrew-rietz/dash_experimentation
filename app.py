@@ -304,6 +304,7 @@ def make_main_figure(x_axis, y_axis, poly_degrees, table_rows, filter):
         "height": 650,
         "margin": {
             "b": 100,
+            "r": 50
         },
         "paper_bgcolor": "LightSteelBlue"
     }
