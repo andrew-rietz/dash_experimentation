@@ -185,7 +185,7 @@ def fit_polynomial(df, x_col, y_col, degree):
         f"[{x_col}]*[{coefficients[i]}]^{i}]<br>" for i in range(1, len(coefficients))
     ])
     fit_equation = (
-        f"[{y_col}] = {intercept} + {coeff_str}"
+        f"[{y_col}] = {intercept}<br> + {coeff_str}"
     )
     return pd.DataFrame(data=poly_prediction, index=df.index), r_squared, fit_equation
 
@@ -199,8 +199,8 @@ def dash_table_filters(filter):
 
 def describe_filter_annotation(layout, filter_str):        
     filter_annot_text = f"{filter_str}"
-    layout["margin"]["r"] = layout["margin"]["r"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
-    layout["width"] = layout["width"] + 5 * max([len(row) for row in filter_annot_text.split("<br>")])
+    layout["margin"]["r"] = layout["margin"]["r"] + 8 * max([len(row) for row in filter_annot_text.split("<br>")])
+    layout["width"] = layout["width"] + 8 * max([len(row) for row in filter_annot_text.split("<br>")])
     layout["annotations"] = (*layout["annotations"], {
         "x": 1.05,
         "y": 0.75,
