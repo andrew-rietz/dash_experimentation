@@ -182,7 +182,7 @@ def fit_polynomial(df, x_col, y_col, degree):
     intercept = regression_model.intercept_
     coefficients = regression_model.coef_
     coeff_str = " + ".join([
-        f"[{x_col}]*[{coefficients[i]}]^{i}]<br>" for i in range(1, len(coefficients))
+        f"[{coefficients[i]}]*[{x_col}]^{i}<br>" for i in range(1, len(coefficients))
     ])
     fit_equation = (
         f"[{y_col}] = {intercept}<br> + {coeff_str}"
