@@ -215,6 +215,22 @@ def describe_filter_annotation(layout, filter_str):
     return layout
 
 
+def describe_regression_annotation(layout, r_squared, fit_equation):
+    regression_annot_text = f"Regression:<br>{'-' * 15}<br>{fit_equation}<br>(R-Squared: {r_squared})"
+    layout["margin"]["b"] = layout["margin"]["b"] + 15 * len(regression_annot_text.split("<br>"))
+    layout["height"] = layout["height"] + 15 * len(regression_annot_text.split("<br>"))
+    layout["annotations"] = (*layout["annotations"], {
+        "x": 0,
+        "y": -0.15,
+        "showarrow": False,
+        "text": regression_annot_text,
+        "xref": "paper",
+        "yref": "paper",
+        "align": "left",
+        "yanchor": "top"
+    })
+    return layout
+
 # Callback for data table display
 @app.callback([Output("output-data-table", "data"),
                Output("output-data-table", "columns"),
@@ -292,11 +308,8 @@ def make_main_figure(x_axis, y_axis, poly_degrees, table_rows, filter):
         "paper_bgcolor": "LightSteelBlue"
     }
 
-    if(
-        (x_axis != df.columns[0]) and
-        (y_axis != df.columns[0])
-    ):
-        regression_line_data, r_squared, fit_equation = fit_polynomial(df, x_axis, y_axis, 2)
+    if((x_axis != df.columns[0]) and (y_axis != df.columns[0])):
+        regression_line_data, r_squared, fit_equation = fit_polynomial(df, x_axis, y_axis, poly_degrees)
         df["regression"] = regression_line_data
         data.append(go.Scatter(
             x=df[x_axis],
@@ -304,19 +317,7 @@ def make_main_figure(x_axis, y_axis, poly_degrees, table_rows, filter):
             mode="markers",
             name="Regression Line",
         ))
-        regression_annot_text = f"Regression:<br>{'-' * 15}<br>{fit_equation};   (R-Squared: {r_squared})"
-        layout["margin"]["b"] = layout["margin"]["b"] + 15 * len(regression_annot_text.split("<br>"))
-        layout["height"] = layout["height"] + 15 * len(regression_annot_text.split("<br>"))
-        layout["annotations"] = (*layout["annotations"], {
-            "x": 0,
-            "y": -0.15,
-            "showarrow": False,
-            "text": regression_annot_text,
-            "xref": "paper",
-            "yref": "paper",
-            "align": "left",
-            "yanchor": "top"
-        })
+        layout = describe_regression_annotation(layout, r_squared, fit_equation)
 
     if filter:
         filter_str = dash_table_filters(filter)
