@@ -40,8 +40,6 @@ app.layout = html.Div(
                     "textAlign": "center",
                     "margin": "10px"
                 },
-                # Allow multiple files to be uploaded
-                # multiple=True
             ),
         ]),
         html.Div([
@@ -49,8 +47,6 @@ app.layout = html.Div(
                 id="output-data-table",
                 editable=True,
                 filter_action="native",
-                # row_selectable="multi",
-                # style_as_list_view=True,
                 style_table={
                     'maxHeight': '200px',
                     'overflowY': 'scroll',
@@ -66,7 +62,6 @@ app.layout = html.Div(
                 id="x_axis",
                 value="",
                 className="dcc_control",
-                # options=x_filter_options,
                 inputStyle={
                     "margin-left": "10px",
                     "margin-right": "2px",
@@ -77,7 +72,7 @@ app.layout = html.Div(
                 id="y_axis",
                 value="",
                 className="dcc_control",
-                # options=y_filter_options,
+                inputStyle={
                 inputStyle={
                     "margin-left": "10px",
                     "margin-right": "2px",
@@ -198,10 +193,9 @@ def update_output(contents, filename):
     columns = [{"name": c_name, "id": c_name, "deletable": True, "renamable": True}
                for c_name in df.columns]
 
-    # load_table(df, columns)
     return df.to_dict("records"), columns, columns[0].get("name"), columns[0].get("name")
 
-@app.callback( # reference elements by id
+@app.callback(
     [Output("x_axis", "options"),
      Output("y_axis", "options")],
     [Input('output-data-table', 'data')]
