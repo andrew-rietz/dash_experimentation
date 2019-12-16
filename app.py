@@ -16,6 +16,9 @@ from sklearn.preprocessing import PolynomialFeatures
 # Create app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+# Set global vars. NOTE: These are independent of session
+polynomial_degrees = [{"label": i, "value": i} for i in range(1, 6)]
+
 # Create app layout
 app.layout = html.Div(
     [
@@ -73,6 +76,16 @@ app.layout = html.Div(
                 value="",
                 className="dcc_control",
                 inputStyle={
+                    "margin-left": "10px",
+                    "margin-right": "2px",
+                }                
+            ),
+            html.H6("Select degree of polynomial for trendline"),
+            dcc.RadioItems(
+                id="poly_degrees",
+                value=1,
+                options=polynomial_degrees,
+                className="dcc_control",
                 inputStyle={
                     "margin-left": "10px",
                     "margin-right": "2px",
